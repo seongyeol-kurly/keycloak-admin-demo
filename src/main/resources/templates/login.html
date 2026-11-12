@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${appName} + ' · 로그인'">로그인</title>
+    <style th:inline="css">
+        :root { --brand: [(${appColor})]; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; display: grid; place-items: center;
+               font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", sans-serif;
+               background: #f4f5f7; color: #1f2328; }
+        .card { width: min(420px, calc(100vw - 32px)); background: #fff; border-radius: 16px; padding: 40px 32px;
+                box-shadow: 0 8px 30px rgba(0,0,0,.06); text-align: center; border-top: 6px solid var(--brand); }
+        h1 { font-size: 22px; margin: 0 0 8px; }
+        p.sub { color: #656d76; margin: 0 0 28px; font-size: 14px; }
+        .btn { display: block; width: 100%; padding: 14px; border-radius: 10px; background: var(--brand); color: #fff;
+               text-decoration: none; font-weight: 600; font-size: 15px; }
+        .btn:hover { filter: brightness(1.08); }
+        .hint { margin-top: 16px; font-size: 12px; color: #8b949e; line-height: 1.6; }
+        .notice { background: #f0f9f4; color: #1a7f37; border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-bottom: 20px; }
+        .error { background: #fff1f0; color: #cf222e; border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1 th:text="${appName}">예시 어드민</h1>
+    <p class="sub">사내 임직원 전용 어드민입니다</p>
+
+    <div class="notice" th:if="${param.logout}">이 어드민에서만 로그아웃되었어요.<br>다른 어드민의 로그인은 유지돼요.</div>
+    <div class="error" th:if="${param.error}">로그인에 실패했어요. 다시 시도해주세요.</div>
+
+    <a class="btn" href="/oauth2/authorization/keycloak">Keycloak으로 로그인</a>
+    <p class="hint">이미 다른 어드민에 로그인되어 있다면(SSO 세션 유지 중)<br>비밀번호 입력 없이 바로 로그인돼요.</p>
+</div>
+</body>
+</html>
