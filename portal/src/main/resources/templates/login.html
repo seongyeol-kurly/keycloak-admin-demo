@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('로그인')}"></head>
+<body>
+<main style="max-width:420px;margin-top:15vh">
+    <div class="card" style="text-align:center;padding:36px 28px">
+        <h1>🔐 어드민 포털</h1>
+        <p class="sub">어드민 등록 · 권한 관리 · 권한 신청/결재</p>
+        <div class="flash ok" th:if="${param.logout}">포털에서 로그아웃했어요. 다른 어드민 로그인은 유지돼요.</div>
+        <a class="btn" href="/oauth2/authorization/keycloak"
+           style="display:block;background:#1f6feb;color:#fff;border-color:#1f6feb;padding:12px;font-weight:600">Keycloak으로 로그인</a>
+        <p class="muted" style="font-size:12px;margin-top:14px">다른 어드민에 로그인되어 있다면 비밀번호 없이 바로 로그인돼요.</p>
+    </div>
+</main>
+</body>
+</html>

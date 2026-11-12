@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('감사 로그')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('audit')}"></nav>
+<main>
+    <h1>감사 로그</h1>
+    <p class="sub">Keycloak 이벤트에는 실행자가 포털 서비스 계정으로만 남기 때문에, 실제 실행자는 포털이 직접 기록해요. (최근 200건)</p>
+    <div class="card">
+        <table>
+            <tr><th style="width:140px">시각</th><th>실행자</th><th>작업</th><th>대상</th><th>상세</th></tr>
+            <tr th:each="l : ${logs}">
+                <td class="muted" th:text="${@fmt.t(l.at)}"></td>
+                <td th:text="${l.actor}"></td>
+                <td><code th:text="${l.action}"></code></td>
+                <td th:text="${l.target}"></td>
+                <td class="muted" th:text="${l.detail}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(logs)}"><td colspan="5" class="muted">기록이 없어요.</td></tr>
+        </table>
+    </div>
+</main>
+</body>
+</html>

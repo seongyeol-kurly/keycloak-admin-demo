@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${g['name']})}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('groups')}"></nav>
+<main>
+    <div th:replace="~{fragments :: flash}"></div>
+    <p class="muted"><a th:href="@{/groups}">그룹</a> ›</p>
+    <h1 th:text="${g['name']}">정산팀</h1>
+    <p class="sub">이 그룹의 권한은 멤버 전원에게 상속돼요.</p>
+
+    <div class="grid2">
+        <div class="card">
+            <h2>멤버</h2>
+            <table>
+                <tr th:each="m : ${members}">
+                    <td><a th:href="@{/users/{id}(id=${m['id']})}" th:text="${m['username']}">testuser</a>
+                        <span class="muted" th:text="${(m['firstName'] ?: '') + ' ' + (m['lastName'] ?: '')}"></span></td>
+                    <td style="width:60px">
+                        <form method="post" th:action="@{/groups/{g}/members/{u}/delete(g=${g['id']},u=${m['id']})}">
+                            <button class="link" type="submit">제외</button></form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(members)}"><td class="muted">멤버가 없어요.</td></tr>
+            </table>
+            <form th:action="@{/groups/{g}/members(g=${g['id']})}" method="post" class="row" style="margin-top:10px">
+                <input name="username" placeholder="username" required>
+                <button type="submit">멤버 추가</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>그룹 권한</h2>
+            <table>
+                <tr th:each="row : ${access}" th:with="c=${row['client']}">
+                    <td style="width:35%"><a th:href="@{/clients/{id}(id=${c.clientId})}" th:text="${c.name}"></a>
+                        <div class="lock" th:unless="${row['canManage']}">🔒 소유자만 변경</div></td>
+                    <td>
+                        <span class="chip" th:each="r : ${row['direct']}">
+                            <span th:text="${r}"></span>
+                            <form class="inline" th:if="${row['canManage']}" method="post" th:action="@{/groups/{g}/roles/delete(g=${g['id']})}">
+                                <input type="hidden" name="clientId" th:value="${c.clientId}">
+                                <input type="hidden" name="role" th:value="${r}">
+                                <button class="link" type="submit">✕</button></form>
+                        </span>
+                        <span class="muted" th:if="${#sets.isEmpty(row['direct'])}">없음</span>
+                        <form th:if="${row['canManage']}" th:action="@{/groups/{g}/roles(g=${g['id']})}" method="post" class="row" style="margin-top:6px">
+                            <input type="hidden" name="clientId" th:value="${c.clientId}">
+                            <select name="role" required>
+                                <option th:each="r : ${row['allRoles']}" th:value="${r}" th:text="${r}"></option>
+                            </select>
+                            <button type="submit">부여</button>
+                        </form>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

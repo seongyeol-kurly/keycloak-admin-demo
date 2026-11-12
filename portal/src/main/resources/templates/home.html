@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('대시보드')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('home')}"></nav>
+<main>
+    <div th:replace="~{fragments :: flash}"></div>
+    <h1>안녕하세요, <span th:text="${me.name}">홍길동</span>님</h1>
+    <p class="sub">
+        <span th:text="${me.username}"></span> · <span th:text="${me.email} ?: '-'"></span> ·
+        그룹 <span th:each="g : ${myGroups}" class="chip gray" th:text="${g['name']}">정산팀</span>
+        <span th:if="${#lists.isEmpty(myGroups)}" class="muted">없음</span>
+    </p>
+
+    <div class="card">
+        <h2>내 어드민 권한</h2>
+        <table>
+            <tr><th style="width:30%">어드민</th><th>보유 권한 (그룹 상속 포함)</th><th style="width:18%">내 관리 권한</th></tr>
+            <tr th:each="row : ${myAccess}">
+                <td><a th:href="@{/clients/{id}(id=${row['client'].clientId})}" th:text="${row['client'].name}">주문 어드민</a>
+                    <div class="muted" th:text="${row['client'].clientId}"></div></td>
+                <td>
+                    <span class="chip" th:each="r : ${row['roles']}" th:text="${r}">order.read</span>
+                    <span class="muted" th:if="${#lists.isEmpty(row['roles'])}">없음 — <a th:href="@{/requests}">권한 신청</a></span>
+                </td>
+                <td><span class="chip green" th:if="${row['canManage']}">관리 가능</span>
+                    <span class="lock" th:unless="${row['canManage']}">조회만</span></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="card">
+        <div class="row" style="justify-content:space-between">
+            <h2>최근 내 권한 신청</h2>
+            <a th:href="@{/requests}">결재함 (대기 <b th:text="${pendingCount}">0</b>건) →</a>
+        </div>
+        <table>
+            <tr><th>#</th><th>어드민 / 권한</th><th>상태</th><th>신청일</th></tr>
+            <tr th:each="r : ${myRequests}">
+                <td th:text="${r.id}"></td>
+                <td th:text="${r.clientId} + ' / ' + ${r.roleName}"></td>
+                <td th:replace="~{fragments :: status(${r})}"></td>
+                <td th:text="${@fmt.t(r.createdAt)}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(myRequests)}"><td colspan="4" class="muted">신청 내역이 없어요.</td></tr>
+        </table>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('어드민 관리')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('clients')}"></nav>
+<main>
+    <div th:replace="~{fragments :: flash}"></div>
+    <h1>어드민 관리</h1>
+    <p class="sub">포털에 등록된 어드민(OAuth client) 목록이에요. 어드민을 등록하면 등록한 사람이 소유자가 되고, 소유자가 해당 어드민의 권한을 관리해요.</p>
+
+    <div class="card">
+        <table>
+            <tr><th>어드민</th><th>client ID</th><th>주소</th><th>소유자</th><th>권한 수</th><th></th></tr>
+            <tr th:each="row : ${rows}" th:with="c=${row['client']}">
+                <td><a th:href="@{/clients/{id}(id=${c.clientId})}" th:text="${c.name}">주문 어드민</a></td>
+                <td><code th:text="${c.clientId}"></code></td>
+                <td class="muted" th:text="${c.baseUrl}"></td>
+                <td th:text="${c.owner} ?: '(없음 · portal-admin만)'"></td>
+                <td th:text="${row['roleCount']}"></td>
+                <td><span class="chip green" th:if="${row['canManage']}">관리 가능</span>
+                    <span class="lock" th:unless="${row['canManage']}">🔒 조회만</span></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>새 어드민 등록</h2>
+        <p class="muted" style="margin-top:-6px">Keycloak에 confidential client가 생성되고, redirect URI는 <code>{주소}/*</code>로 제한돼요. client secret은 등록 직후 한 번만 보여줘요.</p>
+        <form th:action="@{/clients}" method="post" class="row">
+            <input name="clientId" placeholder="client ID (예: coupon-admin)" required pattern="[a-z][a-z0-9\-]{2,39}" style="width:220px">
+            <input name="name" placeholder="표시 이름 (예: 쿠폰 어드민)" required style="width:200px">
+            <input name="baseUrl" placeholder="주소 (예: http://15.165.81.59:8084)" required style="width:280px">
+            <button class="primary" type="submit">등록</button>
+        </form>
+    </div>
+</main>
+</body>
+</html>

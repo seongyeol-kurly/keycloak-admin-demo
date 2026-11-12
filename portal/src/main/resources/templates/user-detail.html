@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${u['username']})}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('users')}"></nav>
+<main>
+    <div th:replace="~{fragments :: flash}"></div>
+    <p class="muted"><a th:href="@{/users}">임직원</a> ›</p>
+    <h1 th:text="${(u['firstName'] ?: '') + ' ' + (u['lastName'] ?: '')}">Test User</h1>
+    <p class="sub"><span th:text="${u['username']}"></span> · <span th:text="${u['email']} ?: '-'"></span></p>
+
+    <div class="card">
+        <h2>소속 그룹</h2>
+        <div class="row" style="margin-bottom:10px">
+            <span th:each="g : ${groups}" class="chip gray">
+                <a th:href="@{/groups/{id}(id=${g['id']})}" th:text="${g['name']}">정산팀</a>
+                <form class="inline" method="post" th:action="@{/users/{u}/groups/{g}/delete(u=${u['id']},g=${g['id']})}">
+                    <button class="link" type="submit">✕</button></form>
+            </span>
+            <span class="muted" th:if="${#lists.isEmpty(groups)}">소속 그룹이 없어요.</span>
+        </div>
+        <form th:action="@{/users/{u}/groups(u=${u['id']})}" method="post" class="row">
+            <select name="groupId" required>
+                <option th:each="g : ${allGroups}" th:value="${g['id']}" th:text="${g['name']}"></option>
+            </select>
+            <button type="submit">그룹에 추가</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>어드민 권한</h2>
+        <p class="muted" style="margin-top:-6px">
+            <span class="chip">직접 부여</span> <span class="chip inherit">그룹 상속</span>
+            · 직접 부여된 권한만 여기서 회수할 수 있어요. 그룹 상속 권한은 그룹에서 빼야 해요.
+        </p>
+        <table>
+            <tr><th style="width:24%">어드민</th><th>권한</th><th style="width:30%">부여</th></tr>
+            <tr th:each="row : ${access}" th:with="c=${row['client']}">
+                <td><a th:href="@{/clients/{id}(id=${c.clientId})}" th:text="${c.name}"></a>
+                    <div class="lock" th:unless="${row['canManage']}">🔒 소유자만 변경</div></td>
+                <td>
+                    <span th:each="r : ${row['effective']}">
+                        <span class="chip" th:if="${row['direct'].contains(r)}">
+                            <span th:text="${r}"></span>
+                            <form class="inline" th:if="${row['canManage']}" method="post" th:action="@{/users/{u}/roles/delete(u=${u['id']})}">
+                                <input type="hidden" name="clientId" th:value="${c.clientId}">
+                                <input type="hidden" name="role" th:value="${r}">
+                                <button class="link" type="submit">✕</button></form>
+                        </span>
+                        <span class="chip inherit" th:unless="${row['direct'].contains(r)}" th:text="${r}" title="그룹 상속"></span>
+                    </span>
+                    <span class="muted" th:if="${#sets.isEmpty(row['effective'])}">없음</span>
+                </td>
+                <td>
+                    <form th:if="${row['canManage']}" th:action="@{/users/{u}/roles(u=${u['id']})}" method="post" class="row">
+                        <input type="hidden" name="clientId" th:value="${c.clientId}">
+                        <select name="role" required>
+                            <option th:each="r : ${row['allRoles']}" th:value="${r}" th:text="${r}"></option>
+                        </select>
+                        <button type="submit">부여</button>
+                    </form>
+                </td>
+            </tr>
+        </table>
+    </div>
+</main>
+</body>
+</html>

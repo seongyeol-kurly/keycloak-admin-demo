@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('권한 신청·결재')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('requests')}"></nav>
+<main>
+    <div th:replace="~{fragments :: flash}"></div>
+    <h1>권한 신청 · 결재</h1>
+    <p class="sub">필요한 어드민 권한을 신청하고, 승인되면 Keycloak에 바로 부여돼요. <span class="chip yellow">PoC: 본인 셀프 승인 가능</span></p>
+
+    <div class="card">
+        <h2>권한 신청</h2>
+        <form th:action="@{/requests}" method="post" class="row">
+            <select name="target" required style="min-width:340px">
+                <option value="" disabled selected>어드민 / 권한 선택</option>
+                <option th:each="o : ${options}" th:value="${o['value']}" th:text="${o['label']}"></option>
+            </select>
+            <input name="reason" placeholder="신청 사유" required style="width:300px">
+            <button class="primary" type="submit">신청</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>결재함 (대기)</h2>
+        <table>
+            <tr><th>#</th><th>신청자</th><th>어드민 / 권한</th><th>사유</th><th>신청일</th><th style="width:320px">결재</th></tr>
+            <tr th:each="p : ${pending}" th:with="r=${p['r']}">
+                <td th:text="${r.id}"></td>
+                <td th:text="${r.requesterName} + ' (' + ${r.requester} + ')'"></td>
+                <td><b th:text="${r.clientId}"></b> / <span class="chip" th:text="${r.roleName}"></span></td>
+                <td th:text="${r.reason}"></td>
+                <td th:text="${@fmt.t(r.createdAt)}"></td>
+                <td>
+                    <div th:if="${p['canDecide']}" class="row">
+                        <form class="row" method="post" th:action="@{/requests/{id}/approve(id=${r.id})}">
+                            <input name="comment" placeholder="의견 (선택)" style="width:120px">
+                            <button class="primary" type="submit" th:text="${p['self']} ? '셀프 승인' : '승인'">승인</button>
+                        </form>
+                        <form method="post" th:action="@{/requests/{id}/reject(id=${r.id})}"><button class="danger" type="submit">반려</button></form>
+                    </div>
+                    <span class="lock" th:unless="${p['canDecide']}">결재 권한 없음</span>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(pending)}"><td colspan="6" class="muted">대기 중인 신청이 없어요.</td></tr>
+        </table>
+    </div>
+
+    <div class="grid2">
+        <div class="card">
+            <h2>내 신청</h2>
+            <table>
+                <tr><th>#</th><th>어드민 / 권한</th><th>상태</th><th></th></tr>
+                <tr th:each="r : ${mine}">
+                    <td th:text="${r.id}"></td>
+                    <td th:text="${r.clientId} + ' / ' + ${r.roleName}"></td>
+                    <td th:replace="~{fragments :: status(${r})}"></td>
+                    <td><form th:if="${r.status.name() == 'PENDING'}" method="post" th:action="@{/requests/{id}/cancel(id=${r.id})}">
+                        <button class="link" type="submit">취소</button></form></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(mine)}"><td colspan="4" class="muted">신청 내역이 없어요.</td></tr>
+            </table>
+        </div>
+        <div class="card">
+            <h2>전체 최근 결재 이력</h2>
+            <table>
+                <tr><th>#</th><th>신청자</th><th>어드민 / 권한</th><th>상태</th><th>결재자</th></tr>
+                <tr th:each="r : ${recent}">
+                    <td th:text="${r.id}"></td>
+                    <td th:text="${r.requester}"></td>
+                    <td th:text="${r.clientId} + ' / ' + ${r.roleName}"></td>
+                    <td th:replace="~{fragments :: status(${r})}"></td>
+                    <td><span th:text="${r.decidedBy} ?: '-'"></span>
+                        <div class="muted" th:if="${r.decidedAt}" th:text="${@fmt.t(r.decidedAt)}"></div></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

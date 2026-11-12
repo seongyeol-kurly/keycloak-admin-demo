@@ -10,6 +10,7 @@
 | Keycloak 관리 콘솔 | https://15.165.81.59 | 자체서명 인증서 → 브라우저 경고에서 `고급 → 이동`. 관리자 계정은 Slack 스레드 참고 |
 | 주문 어드민 | http://15.165.81.59:8081 | client: `order-admin`, 필수 권한: `order.read` |
 | 정산 어드민 | http://15.165.81.59:8082 | client: `settle-admin`, 필수 권한: `settle.read` |
+| **어드민 포털** | http://15.165.81.59:8083 | client: `admin-portal`. 어드민 등록 · 권한 관리 · 권한 신청/결재 ([아래 설명](#어드민-포털-portal)) |
 
 - 테스트 계정: `demo` realm의 `testuser` (비밀번호는 Slack 스레드 참고)
 - 서버: playground 계정 EC2 `seongyeol-test` (Keycloak 26.4 dev 모드 + 어드민 2개, 모두 Docker)
@@ -126,3 +127,70 @@ deploy/                          # EC2 배포·검증 스크립트
 - **권한 변경은 재로그인 후 반영**: 권한은 로그인 시 받은 토큰 기준이라, Keycloak에서 바꿔도 이미 로그인된 어드민에는 즉시 반영되지 않음
 - **발급된 access token은 만료 전까지 유효**: 즉시 차단이 필요하면 짧은 토큰 수명, Backchannel Logout, introspection 등을 검토
 - PoC용 구성: Keycloak dev 모드(H2 DB), 자체서명 인증서, 어드민은 HTTP. 운영 시 DB·이중화·정식 인증서 필요
+
+---
+
+## 어드민 포털 (`portal/`)
+
+Keycloak 관리 콘솔은 **우리 팀만** 쓰고, 타팀 실무자는 이 포털에서 필요한 작업만 하도록 만든 커스텀 관리 화면입니다.
+포털 백엔드가 **서비스 계정(client_credentials)** 으로 Keycloak **Admin REST API** 를 호출합니다. 브라우저는 Admin API를 직접 호출하지 않습니다.
+
+```
+타팀 실무자 브라우저 ──(Keycloak SSO 로그인)──▶ 어드민 포털 (Spring Boot, :8083)
+                                                   │ ① 포털 권한 체크 (소유자 / portal-admin)
+                                                   │ ② 감사 로그 기록 (H2)
+                                                   ▼ ③ 서비스 계정 토큰으로 호출
+                                          Keycloak Admin REST API (/admin/realms/demo/...)
+```
+
+### 기능
+
+| 메뉴 | 기능 |
+|---|---|
+| 대시보드 | 내 어드민별 보유 권한(그룹 상속 포함), 최근 내 신청 |
+| 어드민 관리 | **어드민(OAuth client) 등록** → Keycloak confidential client 생성, redirect URI `{주소}/*`로 제한, secret 1회 노출 / 소유자 변경 / secret 재발급 |
+| 어드민 상세 | **어드민별 권한(client role) 생성·삭제**, role별 부여된 임직원·그룹 조회, 부여·회수 |
+| 임직원 | 검색, 소속 그룹 추가·제외, 어드민별 권한 부여·회수 (직접 부여 / 그룹 상속 구분 표시) |
+| 그룹 | 생성, 멤버 추가·제외, 그룹 권한 부여·회수 (멤버 전원 상속) |
+| 권한 신청·결재 | **임직원 권한 신청 → 결재(승인/반려) → 승인 시 Keycloak에 role 자동 부여**, 신청 취소, 결재 이력 |
+| 감사 로그 | 포털에서 일어난 모든 변경 (실행자 / 작업 / 대상) |
+
+### 권한 규칙 (가드레일)
+
+| 작업 | 허용 대상 |
+|---|---|
+| 어드민 등록 | 로그인한 누구나 → **등록자가 소유자** |
+| 어드민 권한 생성·삭제, 임직원/그룹에 권한 부여·회수, secret 재발급 | **해당 어드민 소유자** 또는 `portal-admin` |
+| 그룹 생성, 그룹 멤버 변경 | 로그인한 누구나 (PoC. 운영 시 그룹 관리자 개념 필요) |
+| 권한 신청 승인·반려 | **신청자 본인 셀프 승인 (PoC)** / 소유자 / `portal-admin` |
+
+- `portal-admin` = `admin-portal` client의 role. **우리 팀에게만** Keycloak 콘솔에서 부여
+- 포털은 **포털에 등록된 어드민의 role만** 다룸. `realm-management` 등 Keycloak 내장 client는 등록·조회 불가 → 권한 상승 방지
+- 서비스 계정 권한은 최소한으로: `manage-clients, view-clients, query-clients, manage-users, view-users, query-users, query-groups`
+- Keycloak admin event에는 실행자가 "포털 서비스 계정"으로만 남으므로, **실제 실행자는 포털 감사 로그**에 기록
+
+### 초기 데이터
+- 기존 예시 어드민을 포털 관리 대상으로 가져옴: `order-admin`(소유자 testuser), `settle-admin`(소유자 없음 → portal-admin만 변경)
+- 그래서 testuser로 로그인하면 **주문 어드민은 관리 가능, 정산 어드민은 조회만** (소유자 체크 확인용)
+
+### 코드 구조
+
+```
+portal/src/main/java/com/example/portal/
+├── keycloak/KeycloakAdminClient.java   # Admin REST API 호출 (서비스 계정 토큰 캐시)
+├── service/PortalService.java          # 비즈니스 로직 + 권한 규칙 + 감사 로그
+├── service/SeedRunner.java             # 기존 client 가져오기
+├── domain/                             # ManagedClient(소유자), AccessRequest(결재), AuditLog
+├── security/                           # OIDC 로그인, portal-admin role 변환, 포털만 로그아웃
+└── web/                                # Home / Client / Directory(임직원·그룹) / Request 컨트롤러
+portal/deploy/
+├── setup-portal.sh   # admin-portal client + 서비스 계정 권한 + portal-admin role
+├── run-portal.sh     # 빌드 후 :8083 실행 (H2 데이터: /opt/keycloak-portal-data)
+└── e2e-portal.sh     # 등록 → 권한 생성/부여 → 소유자 차단 → 신청/셀프 승인 → Keycloak 반영 확인
+```
+
+### 운영으로 가려면 (PoC와 다른 점)
+- 셀프 승인 → 결재선(신청자 팀장 → 어드민 소유자 등)
+- H2 → 운영 DB, 포털 이중화
+- 그룹 관리 권한 모델 (그룹 관리자), 소유자 다중화(팀 단위 소유)
+- client secret 전달 방식 (Vault 등), redirect URI 도메인 화이트리스트

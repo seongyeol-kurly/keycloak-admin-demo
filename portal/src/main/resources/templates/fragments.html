@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' · 어드민 포털'">어드민 포털</title>
+    <style>
+        :root { --brand: #1f6feb; --line: #d0d7de; --muted: #656d76; --bg: #f6f8fa; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", sans-serif;
+               background: #f4f5f7; color: #1f2328; font-size: 14px; }
+        a { color: var(--brand); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        nav { background: #24292f; color: #fff; display: flex; align-items: center; gap: 4px; padding: 0 24px; height: 52px; flex-wrap: wrap; }
+        nav .logo { font-weight: 700; margin-right: 20px; color: #fff; }
+        nav a.m { color: #c9d1d9; padding: 8px 12px; border-radius: 6px; }
+        nav a.m.on, nav a.m:hover { background: #3a414a; color: #fff; text-decoration: none; }
+        nav .right { margin-left: auto; display: flex; align-items: center; gap: 10px; color: #c9d1d9; }
+        nav .right button { background: none; border: 1px solid #57606a; color: #c9d1d9; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+        main { max-width: 1120px; margin: 24px auto; padding: 0 16px; }
+        h1 { font-size: 22px; margin: 0 0 6px; }
+        h2 { font-size: 16px; margin: 0 0 12px; }
+        .sub { color: var(--muted); margin: 0 0 20px; }
+        .card { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin-bottom: 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid #eaeef2; vertical-align: top; }
+        th { color: var(--muted); font-weight: 600; font-size: 13px; background: var(--bg); }
+        .chip { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; background: #ddf4ff; color: #0969da; margin: 1px 2px 1px 0; }
+        .chip.gray { background: #eaeef2; color: #424a53; }
+        .chip.green { background: #dafbe1; color: #1a7f37; }
+        .chip.yellow { background: #fff8c5; color: #9a6700; }
+        .chip.red { background: #ffebe9; color: #cf222e; }
+        .chip.inherit { background: #fff; color: #656d76; border: 1px dashed #afb8c1; }
+        .badge { font-size: 11px; padding: 2px 7px; border-radius: 999px; background: #8250df; color: #fff; }
+        form.inline { display: inline; }
+        input, select, textarea { font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+        button, .btn { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: #f6f8fa; cursor: pointer; color: #1f2328; }
+        button.primary { background: #1f883d; border-color: #1f883d; color: #fff; }
+        button.danger { color: #cf222e; }
+        button.link { border: none; background: none; color: #cf222e; padding: 0 4px; font-size: 12px; }
+        .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 800px) { .grid2 { grid-template-columns: 1fr; } }
+        .flash { padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; }
+        .flash.ok { background: #dafbe1; color: #1a7f37; }
+        .flash.err { background: #ffebe9; color: #cf222e; }
+        .muted { color: var(--muted); }
+        .lock { color: var(--muted); font-size: 12px; }
+        code { background: var(--bg); padding: 1px 5px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<nav th:fragment="nav(active)">
+    <a class="logo" th:href="@{/}">🔐 어드민 포털</a>
+    <a class="m" th:classappend="${active == 'home'} ? 'on'" th:href="@{/}">대시보드</a>
+    <a class="m" th:classappend="${active == 'clients'} ? 'on'" th:href="@{/clients}">어드민 관리</a>
+    <a class="m" th:classappend="${active == 'users'} ? 'on'" th:href="@{/users}">임직원</a>
+    <a class="m" th:classappend="${active == 'groups'} ? 'on'" th:href="@{/groups}">그룹</a>
+    <a class="m" th:classappend="${active == 'requests'} ? 'on'" th:href="@{/requests}">권한 신청·결재</a>
+    <a class="m" th:classappend="${active == 'audit'} ? 'on'" th:href="@{/audit}">감사 로그</a>
+    <div class="right" th:if="${me != null}">
+        <span th:text="${me.name} + ' (' + ${me.username} + ')'">홍길동</span>
+        <span class="badge" th:if="${me.portalAdmin}">portal-admin</span>
+        <form class="inline" th:action="@{/logout}" method="post"><button type="submit">로그아웃</button></form>
+    </div>
+</nav>
+
+<div th:fragment="flash">
+    <div class="flash ok" th:if="${ok}" th:text="${ok}"></div>
+    <div class="flash err" th:if="${err}" th:text="${err}"></div>
+</div>
+
+
+<table><tr>
+    <td th:fragment="status(r)">
+        <span class="chip yellow" th:if="${r.status.name() == 'PENDING'}">결재 대기</span>
+        <span class="chip green" th:if="${r.status.name() == 'APPROVED'}">승인</span>
+        <span class="chip red" th:if="${r.status.name() == 'REJECTED'}">반려</span>
+        <span class="chip gray" th:if="${r.status.name() == 'CANCELED'}">취소</span>
+        <div class="muted" th:if="${r.decisionComment}" th:text="${r.decisionComment}"></div>
+    </td>
+</tr></table>
+
+</body>
+</html>

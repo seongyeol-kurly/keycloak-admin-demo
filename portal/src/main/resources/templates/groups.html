@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('그룹')}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('groups')}"></nav>
+<main>
+    <div th:replace="~{fragments :: flash}"></div>
+    <h1>그룹</h1>
+    <p class="sub">그룹에 권한을 주면 소속 임직원 모두가 권한을 상속받아요.</p>
+    <div class="card">
+        <table>
+            <tr><th>그룹</th><th>멤버 수</th></tr>
+            <tr th:each="g : ${groups}">
+                <td><a th:href="@{/groups/{id}(id=${g['id']})}" th:text="${g['name']}">정산팀</a></td>
+                <td th:text="${g['memberCount']}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(groups)}"><td colspan="2" class="muted">그룹이 없어요.</td></tr>
+        </table>
+    </div>
+    <div class="card">
+        <h2>새 그룹</h2>
+        <form th:action="@{/groups}" method="post" class="row">
+            <input name="name" placeholder="예: 주문운영팀" required>
+            <button class="primary" type="submit">만들기</button>
+        </form>
+    </div>
+</main>
+</body>
+</html>

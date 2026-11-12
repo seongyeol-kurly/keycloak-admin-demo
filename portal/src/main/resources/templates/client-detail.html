@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${client.name})}"></head>
+<body>
+<nav th:replace="~{fragments :: nav('clients')}"></nav>
+<main>
+    <div th:replace="~{fragments :: flash}"></div>
+    <p class="muted"><a th:href="@{/clients}">어드민 관리</a> ›</p>
+    <h1 th:text="${client.name}">주문 어드민</h1>
+    <p class="sub">
+        <code th:text="${client.clientId}"></code> · <span th:text="${client.baseUrl}"></span> ·
+        소유자 <b th:text="${client.owner} ?: '없음 (portal-admin만 관리)'"></b>
+        <span class="chip green" th:if="${canManage}">관리 가능</span>
+        <span class="chip red" th:unless="${canManage}">🔒 소유자만 변경할 수 있어요</span>
+    </p>
+
+    <div class="card">
+        <h2>권한 (client role) 별 부여 현황</h2>
+        <table>
+            <tr><th style="width:18%">권한</th><th style="width:36%">직접 부여된 임직원</th><th style="width:30%">부여된 그룹</th><th></th></tr>
+            <tr th:each="r : ${roles}">
+                <td><b th:text="${r['name']}">order.read</b>
+                    <div class="muted" th:text="${r['description']}"></div></td>
+                <td>
+                    <div th:each="u : ${r['users']}" style="margin-bottom:3px">
+                        <a th:href="@{/users/{id}(id=${u['id']})}" th:text="${u['username']}">testuser</a>
+                        <form class="inline" th:if="${canManage}" method="post"
+                              th:action="@{/clients/{c}/roles/{r}/users/{u}/delete(c=${client.clientId},r=${r['name']},u=${u['id']})}">
+                            <button class="link" type="submit">회수</button></form>
+                    </div>
+                    <span class="muted" th:if="${#lists.isEmpty(r['users'])}">없음</span>
+                    <form th:if="${canManage}" class="row" style="margin-top:6px" method="post"
+                          th:action="@{/clients/{c}/roles/{r}/users(c=${client.clientId},r=${r['name']})}">
+                        <input name="username" placeholder="username" required style="width:130px">
+                        <button type="submit">부여</button>
+                    </form>
+                </td>
+                <td>
+                    <div th:each="g : ${r['groups']}" style="margin-bottom:3px">
+                        <a th:href="@{/groups/{id}(id=${g['id']})}" th:text="${g['name']}">정산팀</a>
+                        <form class="inline" th:if="${canManage}" method="post"
+                              th:action="@{/clients/{c}/roles/{r}/groups/{g}/delete(c=${client.clientId},r=${r['name']},g=${g['id']})}">
+                            <button class="link" type="submit">회수</button></form>
+                    </div>
+                    <span class="muted" th:if="${#lists.isEmpty(r['groups'])}">없음</span>
+                    <form th:if="${canManage}" class="row" style="margin-top:6px" method="post"
+                          th:action="@{/clients/{c}/roles/{r}/groups(c=${client.clientId},r=${r['name']})}">
+                        <select name="groupId" required>
+                            <option th:each="g : ${allGroups}" th:value="${g['id']}" th:text="${g['name']}"></option>
+                        </select>
+                        <button type="submit">부여</button>
+                    </form>
+                </td>
+                <td>
+                    <form th:if="${canManage}" method="post" onsubmit="return confirm('권한을 삭제하면 모든 부여가 함께 사라져요. 삭제할까요?')"
+                          th:action="@{/clients/{c}/roles/{r}/delete(c=${client.clientId},r=${r['name']})}">
+                        <button class="danger" type="submit">삭제</button></form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(roles)}"><td colspan="4" class="muted">아직 권한이 없어요.</td></tr>
+        </table>
+    </div>
+
+    <div class="grid2" th:if="${canManage}">
+        <div class="card">
+            <h2>권한 추가</h2>
+            <form th:action="@{/clients/{c}/roles(c=${client.clientId})}" method="post" class="row">
+                <input name="role" placeholder="예: order.export" required style="width:160px">
+                <input name="description" placeholder="설명 (선택)" style="width:180px">
+                <button class="primary" type="submit">추가</button>
+            </form>
+        </div>
+        <div class="card">
+            <h2>설정</h2>
+            <form th:action="@{/clients/{c}/owner(c=${client.clientId})}" method="post" class="row" style="margin-bottom:10px">
+                <input name="owner" placeholder="새 소유자 username" required style="width:170px">
+                <button type="submit">소유자 변경</button>
+            </form>
+            <form th:action="@{/clients/{c}/secret(c=${client.clientId})}" method="post"
+                  onsubmit="return confirm('재발급하면 기존 secret은 즉시 사용할 수 없어요. 계속할까요?')">
+                <button class="danger" type="submit">client secret 재발급</button>
+            </form>
+        </div>
+    </div>
+</main>
+</body>
+</html>
