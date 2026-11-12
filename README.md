@@ -22,6 +22,31 @@
 4. "이 어드민만 로그아웃" → 해당 어드민만 로그아웃, 다른 어드민과 SSO 세션은 유지
 5. 필수 권한이 없으면 403 + **"OOO 님, 권한 요청이 필요해요"** 화면 (필요한 권한 표시)
 
+## 스크린샷
+
+### 1. 로그인 화면 (주문 / 정산)
+미로그인 상태로 접근하면 Keycloak으로 바로 보내지 않고 버튼 화면을 먼저 보여줍니다. SSO 세션이 있으면 버튼 클릭만으로 로그인됩니다.
+
+| 주문 어드민 | 정산 어드민 |
+|---|---|
+| ![주문 어드민 로그인](docs/images/01-order-login.png) | ![정산 어드민 로그인](docs/images/03-settle-login.png) |
+
+### 2. 로그인 후 화면
+이름 / 아이디 / 이메일과 이 어드민의 client role, 공통 realm role을 표시합니다.
+
+![주문 어드민 홈](docs/images/02-order-home.png)
+
+### 3. 권한이 없을 때
+필수 권한(`order.read`)이 없으면 403과 함께 권한 요청 화면을 보여주고, 필요한 권한을 노란색으로 표시합니다.
+
+![권한 요청 화면](docs/images/04-order-denied.png)
+
+### 4. Keycloak에서 권한 회수
+`demo` realm → Users → testuser → **Role mapping** → `order.read` 선택 → **Unassign** 후, 어드민에서 로그아웃 → 재로그인하면 위 3번 화면이 됩니다.
+(그룹에서 상속받은 권한은 **Hide inherited roles** 체크를 해제해야 보입니다.)
+
+![Keycloak Role mapping](docs/images/05-keycloak-role-mapping.png)
+
 ## 구조
 
 ```
