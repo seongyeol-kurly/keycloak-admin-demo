@@ -1,5 +1,5 @@
 #!/bin/bash
-# EC2에서 실행: 어드민 포털 빌드 후 8083 포트로 실행
+# EC2에서 실행: 컬리 어드민 포털 빌드 후 8083 포트로 실행
 set -eu
 IP=15.165.81.59
 cd /opt/keycloak-admin-demo/portal

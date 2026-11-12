@@ -1,5 +1,5 @@
 #!/bin/bash
-# EC2에서 실행: 어드민 포털용 Keycloak client(admin-portal) + 서비스 계정 권한 설정
+# EC2에서 실행: 컬리 어드민 포털용 Keycloak client(admin-portal) + 서비스 계정 권한 설정
 set -eu
 IP=15.165.81.59
 KC=http://localhost:8080
@@ -16,7 +16,7 @@ echo "== 1. client admin-portal 생성 (사용자 로그인 + 서비스 계정) 
 OLD=$(cid admin-portal); [ -n "$OLD" ] && kc -X DELETE "$K/clients/$OLD"
 SECRET=$(openssl rand -hex 16)
 code -X POST "$K/clients" -d "{
-  \"clientId\":\"admin-portal\",\"name\":\"어드민 포털\",\"publicClient\":false,\"secret\":\"$SECRET\",
+  \"clientId\":\"admin-portal\",\"name\":\"컬리 어드민 포털\",\"publicClient\":false,\"secret\":\"$SECRET\",
   \"standardFlowEnabled\":true,\"directAccessGrantsEnabled\":false,\"serviceAccountsEnabled\":true,\"frontchannelLogout\":false,
   \"rootUrl\":\"http://$IP:8083\",\"redirectUris\":[\"http://$IP:8083/*\"],\"webOrigins\":[\"http://$IP:8083\"]}"; echo
 PID=$(cid admin-portal)

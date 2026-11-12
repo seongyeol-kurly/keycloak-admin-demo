@@ -3,7 +3,7 @@
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${title} + ' · 어드민 포털'">어드민 포털</title>
+    <title th:text="${title} + ' · 컬리 어드민 포털'">컬리 어드민 포털</title>
     <style>
         :root { --brand: #1f6feb; --line: #d0d7de; --muted: #656d76; --bg: #f6f8fa; }
         * { box-sizing: border-box; }
@@ -52,7 +52,7 @@
 <body>
 
 <nav th:fragment="nav(active)">
-    <a class="logo" th:href="@{/}">🔐 어드민 포털</a>
+    <a class="logo" th:href="@{/}">🔐 컬리 어드민 포털</a>
     <a class="m" th:classappend="${active == 'home'} ? 'on'" th:href="@{/}">대시보드</a>
     <a class="m" th:classappend="${active == 'clients'} ? 'on'" th:href="@{/clients}">어드민 관리</a>
     <a class="m" th:classappend="${active == 'users'} ? 'on'" th:href="@{/users}">임직원</a>

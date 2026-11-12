@@ -10,7 +10,7 @@
 | Keycloak 관리 콘솔 | https://15.165.81.59 | 자체서명 인증서 → 브라우저 경고에서 `고급 → 이동`. 관리자 계정은 Slack 스레드 참고 |
 | 주문 어드민 | http://15.165.81.59:8081 | client: `order-admin`, 필수 권한: `order.read` |
 | 정산 어드민 | http://15.165.81.59:8082 | client: `settle-admin`, 필수 권한: `settle.read` |
-| **어드민 포털** | http://15.165.81.59:8083 | client: `admin-portal`. 어드민 등록 · 권한 관리 · 권한 신청/결재 ([아래 설명](#어드민-포털-portal)) |
+| **컬리 어드민 포털** | http://15.165.81.59:8083 | client: `admin-portal`. 어드민 등록 · 권한 관리 · 권한 신청/결재 ([아래 설명](#컬리-어드민-포털-portal)) |
 
 - 테스트 계정: `demo` realm의 `testuser` (비밀번호는 Slack 스레드 참고)
 - 서버: playground 계정 EC2 `seongyeol-test` (Keycloak 26.4 dev 모드 + 어드민 2개, 모두 Docker)
@@ -130,18 +130,29 @@ deploy/                          # EC2 배포·검증 스크립트
 
 ---
 
-## 어드민 포털 (`portal/`)
+## 컬리 어드민 포털 (`portal/`)
 
 Keycloak 관리 콘솔은 **우리 팀만** 쓰고, 타팀 실무자는 이 포털에서 필요한 작업만 하도록 만든 커스텀 관리 화면입니다.
 포털 백엔드가 **서비스 계정(client_credentials)** 으로 Keycloak **Admin REST API** 를 호출합니다. 브라우저는 Admin API를 직접 호출하지 않습니다.
 
 ```
-타팀 실무자 브라우저 ──(Keycloak SSO 로그인)──▶ 어드민 포털 (Spring Boot, :8083)
+타팀 실무자 브라우저 ──(Keycloak SSO 로그인)──▶ 컬리 어드민 포털 (Spring Boot, :8083)
                                                    │ ① 포털 권한 체크 (소유자 / portal-admin)
                                                    │ ② 감사 로그 기록 (H2)
                                                    ▼ ③ 서비스 계정 토큰으로 호출
                                           Keycloak Admin REST API (/admin/realms/demo/...)
 ```
+
+### 구현 현황 (PoC)
+
+| 영역 | 구현됨 ✅ | 미구현 🔲 |
+|---|---|---|
+| 어드민(OAuth2 Client) 관리 | 목록 조회, 실무자 직접 등록(등록자=소유자), secret 1회 노출·재발급, 권한(role) 생성·삭제, 소유자만 변경 | role 수정 |
+| 임직원 그룹 관리 | 그룹 생성, 멤버 추가·제외 | 그룹 이름 변경·삭제 |
+| 권한 부여 관리 | 개인·그룹 권한 부여·회수, 권한 신청 → 결재 → 승인 시 자동 부여 (PoC: 셀프 승인) | 결재선(팀장 → 소유자), 결재 담당자 알림 |
+| 본인 권한 페이지 | 어드민별 내 권한(그룹 상속 포함), 내 신청 내역 | 어드민별 마지막 로그인 이력 |
+| 감사 로그 | 포털 내 모든 변경 이력 | - |
+| backend | - | 퇴사 반영 + Kafka 이벤트 발행 |
 
 ### 기능
 
